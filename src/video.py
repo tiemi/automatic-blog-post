@@ -1,10 +1,10 @@
 import os
 import re
-from io import BytesIO
 
 import requests
 from pytube import YouTube
-from PIL import Image, ImageChops
+
+from editor import crop_image_border, save_image
 
 class Video:
     def __init__(self, video_url, output_directory):
@@ -23,16 +23,14 @@ class Video:
     def get_audio_path(self):
         return self.__get_path('{}.mp3')
 
-    def save_image(self, image):
-        image_file_path = self.get_image_path()
-        image = image.save(image_file_path)
-        return self.get_image_path()
-
     def download_image(self):
         if os.path.exists(self.get_image_path()) is False:
             response = requests.get(self.__get_image_url())
-            image = Image.open(BytesIO(response.content))
-            self.save_image(self.__crop_image_border(image))
+            image_url = response.content
+            save_image(
+                image=crop_image_border(image_url),
+                image_file_path=self.get_image_path()
+            )
 
     def download_audio(self):
         youtube_streams = self.youtube.streams.filter(only_audio=True).first()
@@ -45,8 +43,3 @@ class Video:
 
     def __get_image_url(self):
         return self.youtube.thumbnail_url
-
-    def __crop_image_border(self, image):
-        bbox = ImageChops.add(image, image, 1, -100).getbbox()
-        cropped_image = image.crop(bbox) if bbox else image
-        return cropped_image
