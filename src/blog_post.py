@@ -84,8 +84,8 @@ class BlogPost():
                 paragraph = []
         return ' '.join(processed_text)
 
-    async def generate_text(self, dg_api_key):
-        dg_client = Deepgram(dg_api_key)
+    async def generate_text(self, deepgram_key):
+        dg_client = Deepgram(deepgram_key)
         await self.__generate_transcript(dg_client)
         transcripted_words_list = self.__transcript.get('words', [{}])
         time_difference_list = []
