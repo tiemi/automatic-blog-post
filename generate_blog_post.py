@@ -10,7 +10,7 @@ def generate_blog_post(video_url, deepgram_key):
     video.download_audio()
     video.download_image()
     blog_post = BlogPost(video, output_directory)
-    await blog_post.generate_text(deepgram_key)
+    blog_post.generate_text(deepgram_key)
     markdown_post = blog_post.generate_markdown_post()
     blog_post.save_markdown_post(markdown_post)
 

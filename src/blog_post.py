@@ -1,4 +1,5 @@
 import os
+import asyncio
 
 import numpy as np
 from transformers import pipeline
@@ -10,7 +11,6 @@ class BlogPost():
     def __init__(self, video, output_directory):
         self.video = video
         self.text = None
-        self.__transcript = None
         self.output_directory = output_directory
 
     def set_text(self, text):
@@ -40,23 +40,26 @@ class BlogPost():
         return ' '.join(processed_keywords)
 
     def generate_markdown_post(self):
-        mardown_post = '''
-        # {title}
-        
+        mardown_template = (
+        r'''# {title}
+
         \{keywords}
-            
+
         {summary}
-            
+
         <img src="{image_name}" alt="drawing" width="700"/>
-            
+
         {text}
-        '''.format(
+        '''
+        )
+
+        mardown_post = mardown_template.format(
             title=self.video.get_title(),
             summary=self.get_summary(),
             image_name=os.path.basename(self.video.get_image_path())[0],
             text=self.get_text(),
             keywords=' '.join(self.get_keywords(3))
-        ).strip()
+        )
         return mardown_post
 
     def save_markdown_post(self, mardown_post):
@@ -66,17 +69,17 @@ class BlogPost():
     def get_md_path(self):
         return os.path.join(self.output_directory, f'{self.video.get_base_name()}.md')
 
-    def __split_paragraphs(self, time_difference_list):
-        pause_list = [time_difference['time'] for time_difference in time_difference_list if time_difference['time'] > 0]
+    def __split_paragraphs(self, transcript, time_difference_list):
+        pause_list = [time_diff['time'] for time_diff in time_difference_list if time_diff['time'] > 0]
         median_pause = np.median(pause_list)
         processed_text = []
         paragraph = []
         min_paragraph_len = 40
 
-        for ind, processed_word in enumerate(self.__transcript['transcript'].split(' ')):
-            time_difference = time_difference_list[ind]['time']
+        for ind, processed_word in enumerate(transcript['transcript'].split(' ')):
+            time_diff = time_difference_list[ind]['time']
 
-            if (time_difference <= median_pause * 2) or (~processed_word.isupper()) or (len(paragraph) < min_paragraph_len):
+            if (time_diff <= median_pause * 2) or (~processed_word.isupper()) or (len(paragraph) < min_paragraph_len):
                 paragraph.append(processed_word)
             else:
                 paragraph.append(processed_word)
@@ -84,10 +87,10 @@ class BlogPost():
                 paragraph = []
         return ' '.join(processed_text)
 
-    async def generate_text(self, deepgram_key):
+    def generate_text(self, deepgram_key):
         dg_client = Deepgram(deepgram_key)
-        await self.__generate_transcript(dg_client)
-        transcripted_words_list = self.__transcript.get('words', [{}])
+        transcript = asyncio.run(self.__generate_transcript(dg_client))
+        transcripted_words_list = transcript.get('words', [{}])
         time_difference_list = []
         for ind, transcripted_word in enumerate(transcripted_words_list[:-1]):
             time_difference_list.append(
@@ -104,10 +107,11 @@ class BlogPost():
                 'time': 0
             }
         )
-        self.set_text(self.__split_paragraphs(time_difference_list))
+        self.set_text(self.__split_paragraphs(transcript, time_difference_list))
 
     async def __generate_transcript(self, dg_client):
         with open(self.video.get_audio_path(), 'rb') as audio:
             source = {'buffer': audio, 'mimetype': 'audio/wav'}
             response =  await dg_client.transcription.prerecorded(source, {'punctuate': True})
-            self.__transcript = response.get('results', {}).get('channels', [{}])[0].get('alternatives', [{}])[0]
+            transcript = await response.get('results', {}).get('channels', [{}])[0].get('alternatives', [{}])[0]
+            return transcript
