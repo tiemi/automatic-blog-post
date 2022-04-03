@@ -15,7 +15,7 @@ def generate_blog_post(video_url, deepgram_key):
     blog_post.save_markdown_post(markdown_post)
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser = argparse.ArgumentParser()
     parser.add_argument(
         '-v',
         '--video',
