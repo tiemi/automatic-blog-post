@@ -1,3 +1,4 @@
+import os
 import argparse
 
 from src.video import Video
@@ -6,8 +7,10 @@ from src.editor import read_process_dict, read_text, process_text
 
 def edit_blog_post(video_url):
     output_directory = 'output'
-    process_dict_path = 'input/process_dictionary.json'
-    
+    input_directory = 'input'
+    process_dict_name = 'process_dictionary.json'
+    process_dict_path = os.path.join(input_directory, process_dict_name)
+
     video = Video(video_url, output_directory)
     blog_post = BlogPost(video, output_directory)
 
