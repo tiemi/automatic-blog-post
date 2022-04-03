@@ -65,31 +65,50 @@ class BlogPost():
     def get_md_path(self):
         return os.path.join(self.output_directory, f'{self.video.get_base_name()}.md')
 
+    def __lower_first_letter(self, word):
+        return word[0].lower() + word[1:]
+
+    def __fix_punctuation(self, text):
+        splitted_text = text.strip().split('.')
+        merge_sentences = False
+        processed_text = []
+
+        for ind in range(len(splitted_text)):
+            if merge_sentences is True:
+                sentence = self.__lower_first_letter(splitted_text[ind].strip())
+                if sentence is not None:
+                    processed_text[-1] = f'{processed_text[-1]}, {sentence}'
+                    merge_sentences = False
+                else:
+                    processed_text[-1] = f'{processed_text[-1]}.'
+                    merge_sentences = False
+            else:
+                processed_text.append(splitted_text[ind])
+                if (len(splitted_text[ind].strip().split(' ')) <= 3):
+                    merge_sentences = True
+        processed_text_str = '.'.join(processed_text)
+        return processed_text_str
+
     def __split_paragraphs(self, transcript, time_difference_list):
         pause_list = [time_diff['time'] for time_diff in time_difference_list if time_diff['time'] > 0]
         median_pause = np.median(pause_list)
         processed_text = []
         paragraph = []
-        min_paragraph_len = 30
+        text = self.__fix_punctuation(transcript['transcript'])
 
-        for ind, processed_word in enumerate(transcript['transcript'].split(' ')):
+        for ind, processed_word in enumerate(text.split(' ')):
             time_diff = time_difference_list[ind]['time']
 
-            if (time_diff <= median_pause * 1.5) and ((processed_word.islower()) or (len(paragraph) < min_paragraph_len)):
-                paragraph.append(processed_word)
-            else:
+            if (time_diff > (median_pause * 2.5)) and ('.' in processed_word):
                 paragraph.append(processed_word)
                 processed_text.append(' '.join(paragraph))
                 paragraph = []
+            else:
+                paragraph.append(processed_word)
+                
         return '\n\n'.join(processed_text)
 
-    def generate_text(self, deepgram_key):
-        print('Starting generating text')
-        dg_client = Deepgram(deepgram_key)
-        if platform.system()=='Windows':
-            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-        transcript = asyncio.run(self.__generate_transcript(dg_client))
-        transcripted_words_list = transcript.get('words', [{}])
+    def __get_time_difference(self, transcripted_words_list):
         time_difference_list = []
         for ind, transcripted_word in enumerate(transcripted_words_list[:-1]):
             time_difference_list.append(
@@ -106,6 +125,16 @@ class BlogPost():
                 'time': 0
             }
         )
+        return time_difference_list
+
+    def generate_text(self, deepgram_key):
+        print('Starting generating text')
+        dg_client = Deepgram(deepgram_key)
+        if platform.system()=='Windows':
+            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+        transcript = asyncio.run(self.__generate_transcript(dg_client))
+        transcripted_words_list = transcript.get('words', [{}])
+        time_difference_list = self.__get_time_difference(transcripted_words_list)
         self.set_text(self.__split_paragraphs(transcript, time_difference_list))
         print('Finished generating text')
 
