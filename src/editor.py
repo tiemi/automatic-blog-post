@@ -11,7 +11,11 @@ def read_process_dict(process_dict_path):
 def read_text(post_path):
     with open(post_path, encoding='utf-8') as file:
         lines = file.readlines()
-    text = lines[-1]
+    for ind, sentence in enumerate(lines):
+        if sentence.startswith('<img src='):
+            start_ind = ind + 1
+            break
+    text = ' '.join(lines[start_ind:])
     return text
 
 def process_text(text, process_dict):
