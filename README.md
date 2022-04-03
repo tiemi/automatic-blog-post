@@ -24,7 +24,12 @@ pip install -r requirements.txt
 
 ```python
 
+python generate_blog_post.py --deepgram <api_key> --video <youtube_url>
 ```
 
+```python
+
+python edit_blog_post.py --video <youtube_url>
+```
 ## License
 [Apache-2 license](https://www.apache.org/licenses/LICENSE-2.0)
