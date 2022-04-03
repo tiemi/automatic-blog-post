@@ -4,7 +4,7 @@ import re
 import requests
 from pytube import YouTube
 
-from editor import crop_image_border, save_image
+from .editor import crop_image_border, save_image
 
 class Video:
     def __init__(self, video_url, output_directory):
