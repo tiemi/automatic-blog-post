@@ -14,15 +14,15 @@ def read_text(post_path):
     text = lines[-1]
     return text
 
-def read_image(image_url):
-    image = Image.open(BytesIO(image_url))
-    return image
-
 def process_text(text, process_dict):
     processed_text = text
     for word in process_dict.keys():
         processed_text = processed_text.replace(word, process_dict[word])
     return processed_text
+
+def read_image(image_url):
+    image = Image.open(BytesIO(image_url))
+    return image
 
 def crop_image_border(image_url):
     image = read_image(image_url)
