@@ -19,18 +19,35 @@ After you click **Create Key** button, a new key will be created and it's import
 
 To run the code, you’ll need Python installed.
 I also recommend that you create a new environment specifically for this project. My suggestion is to use [Anaconda](https://www.anaconda.com/).
- 
+
+```console
+conda create -n automatic-blog-post
+```
+
+```console
+conda activate automatic-blog-post
+```
+
+```console
+conda install pip
+```
+
+```console
+pip install --upgrade
+```
+
 To install the Python packages, just run the following command:
 
 ```console
 pip install -r requirements.txt
 ```
 
-Then, simply run the command:
+Then, simply run the following command. The parameter <youtube_url> is simply the full url of the video, for example: https://www.youtube.com/watch?v=kibx5BR6trA&ab_channel=Deepgram .
 
 ```console
 python generate_blog_post.py --deepgram <api_key> --video <youtube_url>
 ```
+
 _Note: This is a demonstration tutorial, if you plan to use this in production, I recommend that you use a Key Vault to store the DeepGram API Key._
 
 After a couple of minutes, you'll see the blog post markdown file in your output directory!
